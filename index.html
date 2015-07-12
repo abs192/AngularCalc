@@ -1,0 +1,160 @@
+<!doctype html>
+<html>
+   <head>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.14/angular.min.js"></script>
+   </head>
+   <body ng-app="myapp">
+      <div ng-controller="controller" >
+
+         <div ng-repeat-start="(i,f) in fields"></div>
+            <input ng-model="f.name" ng-change="fieldNames[i]=f.name"/>
+            <input ng-model="f.value" />
+         <div ng-repeat-end ></div>
+         
+         <button class="btn"ng-click="addField()">Add field</button>
+
+         <br/>
+         <br/>         
+
+         <br/>
+         <br/>
+         
+         <button class="btn"ng-click="calculateResult()">Calculate</button> 
+         <h2>Result: {{result}} <br><br> Expression:</h2>
+         
+         <!-- <h2>{{display(root[0])}}</h2>  -->
+            <!-- <h2>{{treeLength(root[0])}}</h2> -->
+  
+         <ul>
+            <li ng-repeat="data in root" ng-include="'tree_item_renderer.html'"></li>
+         </ul>
+
+      </div>
+      <script type="text/ng-template"  id="tree_item_renderer.html">
+          {{display(data)}}
+          <div ng-show="data!='undefined' && data.nodes!='undefined'">
+            
+            <select ng-model="data.type" ng-options="f for f in typeOptions" ng-change="updateNode(data)"/>
+            <input ng-model="data.name"/>
+
+
+          </div>
+           <ul>
+          <br>
+              <li ng-repeat="data in data.nodes" ng-include="'tree_item_renderer.html'"></li>
+          </ul>
+      </script>
+
+
+
+      <script>
+         angular.module("myapp", [])
+         .controller("controller", function($scope) {
+               $scope.fields =[];
+               $scope.fieldNames = [];
+               $scope.editMode=true;
+               $scope.result = 0;
+               $scope.typeOptions = ['operand','operator']; 
+               $scope.operatorOptions = ['+','-','*','/','%']; 
+
+               $scope.fields.push({name:"A",value:"12"});
+               $scope.fieldNames.push("A");
+               $scope.fields.push({name:"B",value:"11"});
+               $scope.fieldNames.push("B");
+               $scope.fields.push({name:"C",value:"31"});
+               $scope.fieldNames.push("C");
+               $scope.fields.push({name:"D",value:"10"});
+               $scope.fieldNames.push("D");
+
+
+               $scope.addField = function(){
+                  $scope.fields.push({name:"",value:""});
+                  $scope.fieldNames.push("");
+               }
+               var A = {type:'operand',name:'A',nodes:[]};
+               var B = {type:'operand',name:'B',nodes:[]};
+               var C = {type:'operand',name:'C',nodes:[]};
+               var D = {type:'operand',name:'D',nodes:[]};
+
+               var ab = {type:'operator',name:'+',nodes:[A,B]};
+               var cd = {type:'operator',name:'-',nodes:[C,D]};
+               $scope.root = [{type:'operator',name:'/',nodes:[ab,cd]}];
+               // var aa = $scope.fields[0].name+"";
+               // $scope.root = [{type:'operand',name:aa,nodes:[]}];
+
+
+               $scope.display = function(a){
+                  if (a.type == "operand"){
+                     return a.name;
+                  }else if(a.type === "operator"){
+                     return "("+ $scope.display(a.nodes[0]) +" "+a.name+" "+$scope.display(a.nodes[1])+ ")";
+                  }
+                  return "";
+               };
+
+               $scope.treeLength = function(a){
+                  if(typeof a === 'undefined' || typeof a.nodes === 'undefined'){
+                     return 0;
+                  }
+                  var l = a.nodes[0];
+                  var r = a.nodes[1];
+                  if(typeof r === 'undefined' && typeof l === 'undefined' ){
+                  // if(a.nodes.length == 0){
+                     return 1;
+                  }
+                  return $scope.treeLength(l) + $scope.treeLength(r);
+               };
+
+               $scope.updateNode = function(data) {
+                  if(data.type === 'operand'){
+                     data.nodes = [];
+                     data.name='A';
+                  }
+                  else if(data.type === 'operator'){
+                     data.name='+';
+                     var a = {type:'operand',name:'A',nodes:[]};
+                     var b = {type:'operand',name:'A',nodes:[]};
+                     data.nodes = [a,b];
+                  }
+               };
+
+               $scope.calculateResult = function(){
+                  $scope.result = $scope.calculate($scope.root[0]);
+               };
+
+               $scope.calculate = function(a){
+                  console.log(a);
+                  if (a.type == "operand"){
+                     var i = $scope.fieldNames.indexOf(a.name);
+                     // console.log($scope.fields);
+                     // console.log(a.name);
+                     // console.log(i);
+
+                     // console.log($scope.fields[i].value);
+                     return parseInt($scope.fields[i].value);
+
+                  }else if(a.type === "operator"){
+                     var val = $scope.mathOperations(a.name,$scope.calculate(a.nodes[0]),$scope.calculate(a.nodes[1]));
+                     console.log(val);
+                     return val;
+
+                  }
+                  return 0;
+               };
+
+               $scope.mathOperations = function(op,x,y){
+                  if(op === '+')
+                     return x+ y;
+                  if(op === '*')
+                     return x* y;
+                  if(op === '-')
+                     return x- y;
+                  if(op === '/')
+                     return x/y;
+                  return 0;
+               }
+               
+         });
+      </script>
+   </body>
+</html>
